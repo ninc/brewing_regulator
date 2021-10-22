@@ -14,19 +14,9 @@ class ScheduleHandler:
 
     def __init__(self):
         self._activeSchedulePath = 'active_schedule/active_schedule.ini'
-        self.active_config = None
+        self._activeSchedule = None
+        self._activeStep = None
         self.readActiveSchedule()
-
-    def setNewSchedule(self, schedule):
-        log.info('New schdule selected {}'.format(schedule))
-        new_config = configparser.ConfigParser()
-        new_config.read(schedule)
-
-    def readActiveSchedule(self):
-        log.info('Parsing schedule {}'.format(self._activeSchedulePath))
-        self.active_config = configparser.ConfigParser()
-        self.active_config.read(self._activeSchedulePath)
-        self.verifySchedule(self._activeSchedulePath)
 
     def _splitScheduleValue(self, value):
         """Splits the schedule values into temperature and time"""
@@ -36,64 +26,112 @@ class ScheduleHandler:
         t = tmp_str[1].replace(']', '').strip()
         return temperature, t
 
-    def validTemperature(self, temperature):
+    def _validTemperature(self, temperature):
         """Verifies that the temperature format provided in the schedule is correct"""
         if 'c' not in temperature:
             return False
         
         #Verify that we can cast the input to a number
         try:
-            float(temperature.replace('c', '')) 
+            float(temperature.replace('c', ''))
         except ValueError:
             return False
         return True
 
-    def validTime(self, t):
+    def _validTime(self, t):
         """Verifies that the time format provided in the schedule is correct"""
-        temp_time = t
+        tmpTime = t
         if 'h' in t:
-            temp_time = t.replace('h', '')
+            tmpTime = t.replace('h', '')
         elif 'd' in t:
-            temp_time = t.replace('d', '')            
+            tmpTime = t.replace('d', '')            
         else:
             return False
         
         #Verify that we can cast the input to a number
         try:
-            float(temp_time)
+            float(tmpTime)
         except ValueError:
             return False
 
         return True
 
-    def verifySchedule(self, schedule):
+    def _verifyKeySequence(self, keys):
+        """Verifies that all the keys are in a sequence"""
+        keys.sort()
+        i = keys[0]
+        for key in keys:
+            if i != key:
+                log.error('Invalid stepping sequence, {} is missing in {}'.format(i, keys))
+                return False
+            i = i + 1
+        return True
+
+    def _verifySchedule(self, schedule):
         """Verifies the format of a schedule"""
-        log.info('Verifying schedule {}'.format(schedule))
-
-        config = configparser.ConfigParser()
-        config.read(schedule)
-
-        #Will be set to false if anything fails
         verified = True
-
-        for each_section in config.sections():
-            for each_key, each_val in config.items(each_section):
+        keys = []
+        for each_section in schedule.sections():
+            if each_section.lower() == 'activestep':
+                    continue
+            for each_key, each_val in schedule.items(each_section):
                 temperature, t = self._splitScheduleValue(each_val)
-                if not self.validTemperature(temperature):
+                if not self._validTemperature(temperature):
                     log.error('Invalid time format in config {}={}'.format(each_key, each_val))
                     verified = False
-                if not self.validTime(t):
+                if not self._validTime(t):
                     log.error('Invalid temperature format in config {}={}'.format(each_key, each_val))
                     verified = False
+                try:
+                    keys.append(int(each_key))
+                except ValueError:
+                    verified = False
 
+        if not self._verifyKeySequence(keys):
+            verified = False
         return verified
+
+    def setNewSchedule(self, schedule):
+        log.info('New schedule selected {}'.format(schedule))
+        newSchedule = configparser.ConfigParser()
+        newSchedule.read(schedule)
+        if self._verifySchedule(newSchedule):
+            #Copy schedule to active folder
+            self._activeSchedule = newSchedule
+            self._activeStep = 1
+            self._saveActiveSchedule()
+        else:
+            log.error('Failed to set new schedule due to previous errors')
+
+    def _saveActiveSchedule(self):
+        log.info('Saving new schedule to {}'.format(self._activeSchedulePath))
+
+        if 'ActiveStep' not in self._activeSchedule.sections():
+            self._activeSchedule.add_section('ActiveStep')
+        self._activeSchedule.set('ActiveStep','step', str(self._activeStep))
+        #TODO: Something is wrong. Cannot write changes to the config file
+        with open(self._activeSchedulePath, 'w') as configfile:
+            self._activeSchedule.write(configfile)
+
+    def readActiveSchedule(self):
+        self._activeSchedule = configparser.ConfigParser()
+        self._activeSchedule.read(self._activeSchedulePath)
+        if not self._verifySchedule(self._activeSchedule):
+            log.error('Failed to verify active schedule: {}'.format(self._activeSchedulePath))
+        self._activeStep = int(self._activeSchedule['ActiveStep']['step'])
 
     def printActiveSchedule(self):
         """Prints the active schedule to stdout"""
-        for each_section in self.active_config.sections():
+        for each_section in self._activeSchedule.sections():
             print(each_section)
-            for each_key, each_val in self.active_config.items(each_section):
+            for each_key, each_val in self._activeSchedule.items(each_section):
                 print('{}={}'.format(each_key, each_val))
+
+    def advanceSchedule(self):
+        #TODO: Advance schedule doesn't work. Config file won't update
+        self._activeStep = self._activeStep + 1
+        log.info('Advancing schedule to step {}'.format(self._activeStep))
+        self._saveActiveSchedule()
 
     def selfTest(self):
         test_schedule = 'test/test_schedule.ini'
