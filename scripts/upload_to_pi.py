@@ -6,7 +6,7 @@ import time
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 script_path = script_path.replace('\\', '/')
-file_path = script_path + '/../*'
+file_path = script_path + '/../*.py'
 pi_path = 'pi@192.168.1.212:/home/pi/project/brewing_regulator'
 
 

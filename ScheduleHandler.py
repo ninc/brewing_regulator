@@ -15,7 +15,7 @@ class ScheduleHandler:
     def __init__(self):
         self._activeSchedulePath = 'active_schedule/active_schedule.ini'
         self._activeSchedule = None
-        self._activeStep = None
+        self._activeStep = 0
         self.readActiveSchedule()
 
     def _splitScheduleValue(self, value):
@@ -109,7 +109,6 @@ class ScheduleHandler:
         if 'ActiveStep' not in self._activeSchedule.sections():
             self._activeSchedule.add_section('ActiveStep')
         self._activeSchedule.set('ActiveStep','step', str(self._activeStep))
-        #TODO: Something is wrong. Cannot write changes to the config file
         with open(self._activeSchedulePath, 'w') as configfile:
             self._activeSchedule.write(configfile)
 
@@ -118,7 +117,11 @@ class ScheduleHandler:
         self._activeSchedule.read(self._activeSchedulePath)
         if not self._verifySchedule(self._activeSchedule):
             log.error('Failed to verify active schedule: {}'.format(self._activeSchedulePath))
-        self._activeStep = int(self._activeSchedule['ActiveStep']['step'])
+        try:
+            self._activeStep = int(self._activeSchedule['ActiveStep']['step'])
+        except:
+            # Default incase of corrupt settings file
+            self._activeStep = 0
 
     def printActiveSchedule(self):
         """Prints the active schedule to stdout"""
@@ -128,7 +131,7 @@ class ScheduleHandler:
                 print('{}={}'.format(each_key, each_val))
 
     def advanceSchedule(self):
-        #TODO: Advance schedule doesn't work. Config file won't update
+        #TODO: When to end?
         self._activeStep = self._activeStep + 1
         log.info('Advancing schedule to step {}'.format(self._activeStep))
         self._saveActiveSchedule()
