@@ -33,6 +33,10 @@ class RelayController:
         log.info('Turning relay {} OFF'.format(relayNumber))
         relay_off(relayNumber)
 
+    def setAllRelaysOff(self):
+        for relayNumber in range(1, self._numberOfRelays+1):
+            self.setRelayOff(relayNumber)
+
     def selfTest(self):
         # Cycle all relays on and off
         log.info('SelfTest started')

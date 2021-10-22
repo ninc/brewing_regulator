@@ -8,6 +8,10 @@ TBD
 ## Required software packages
 TBD
 
+# Installation
+TBD
+Crontab etc...
+
 # Usage
 
 ## Setting a schedule

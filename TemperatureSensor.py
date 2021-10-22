@@ -21,9 +21,7 @@ class TemperatureSensor:
         self.device_file = self.device_folder + '/w1_slave'
 
         # Read initial values to avoid errors
-        for i in range(1, 5):
-            self.readTemperature()
-            time.sleep(0.2)
+        self.readTemperature()
 
 
     def _readTemperatureRaw(self):
