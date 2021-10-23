@@ -15,8 +15,9 @@ class ScheduleHandler:
     def __init__(self):
         self._activeSchedulePath = 'active_schedule/active_schedule.ini'
         self._activeSchedule = None
-        self._activeStep = 0
+        self._currentStep = 0
         self.readActiveSchedule()
+        #TODO: Check if we should advance the schedule
 
     def _splitScheduleValue(self, value):
         """Splits the schedule values into temperature and time"""
@@ -72,7 +73,7 @@ class ScheduleHandler:
         verified = True
         keys = []
         for each_section in schedule.sections():
-            if each_section.lower() == 'activestep':
+            if each_section.lower() == 'currentbrew':
                     continue
             for each_key, each_val in schedule.items(each_section):
                 temperature, t = self._splitScheduleValue(each_val)
@@ -98,7 +99,7 @@ class ScheduleHandler:
         if self._verifySchedule(newSchedule):
             #Copy schedule to active folder
             self._activeSchedule = newSchedule
-            self._activeStep = 1
+            self._currentStep = 0
             self._saveActiveSchedule()
         else:
             log.error('Failed to set new schedule due to previous errors')
@@ -106,9 +107,9 @@ class ScheduleHandler:
     def _saveActiveSchedule(self):
         log.info('Saving new schedule to {}'.format(self._activeSchedulePath))
 
-        if 'ActiveStep' not in self._activeSchedule.sections():
-            self._activeSchedule.add_section('ActiveStep')
-        self._activeSchedule.set('ActiveStep','step', str(self._activeStep))
+        if 'CurrentBrew' not in self._activeSchedule.sections():
+            self._activeSchedule.add_section('CurrentBrew')
+        self._activeSchedule.set('CurrentBrew','CurrentStep', str(self._currentStep))
         with open(self._activeSchedulePath, 'w') as configfile:
             self._activeSchedule.write(configfile)
 
@@ -118,7 +119,7 @@ class ScheduleHandler:
         if not self._verifySchedule(self._activeSchedule):
             log.error('Failed to verify active schedule: {}'.format(self._activeSchedulePath))
         try:
-            self._activeStep = int(self._activeSchedule['ActiveStep']['step'])
+            self._activeStep = int(self._activeSchedule['CurrentBrew']['CurrentStep'])
         except:
             # Default incase of corrupt settings file
             self._activeStep = 0
@@ -132,9 +133,19 @@ class ScheduleHandler:
 
     def advanceSchedule(self):
         #TODO: When to end?
-        self._activeStep = self._activeStep + 1
-        log.info('Advancing schedule to step {}'.format(self._activeStep))
+        self._currentStep = self._currentStep + 1
+        log.info('Advancing schedule to step {}'.format(self._currentStep))
         self._saveActiveSchedule()
+
+    def getTargetTemperature(self):
+        if self._activeStep == 0:
+            return None
+        else:
+            schedule_value = self._activeSchedule['Schedule'][str(self._activeStep)]
+            temperature, t = self._splitScheduleValue(schedule_value)
+            targetTemp = float(temperature.replace('c', ''))
+            return targetTemp
+
 
     def selfTest(self):
         test_schedule = 'test/test_schedule.ini'
@@ -144,7 +155,7 @@ class ScheduleHandler:
 
 if __name__ == '__main__':
     try:
-        logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+        logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
         sh = ScheduleHandler()
         sh.selfTest()
     except KeyboardInterrupt:

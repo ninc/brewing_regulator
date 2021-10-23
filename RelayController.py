@@ -49,7 +49,7 @@ class RelayController:
 
 if __name__ == '__main__':
     try:
-        logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+        logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
         # Testing Relays
         rc = RelayController()
         rc.selfTest()

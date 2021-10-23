@@ -6,6 +6,7 @@ import os
 import sys
 import glob
 import time
+from statistics import mean
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +23,18 @@ class TemperatureSensor:
 
         # Read initial values to avoid errors
         self.readTemperature()
+
+
+    def getFilteredTemperature(self):
+        """Sample the sensor n times and create a moving average"""
+        """Source: https://hackaday.com/2019/09/06/sensor-filters-for-coders/"""
+        n = 10
+        sensorValues = []
+        for i in range(1, n):
+            temp_c, _ = self.readTemperature()
+            sensorValues.append(temp_c)
+
+        return round(mean(sensorValues), 2) # Moving Average and round to 2 decimal points
 
 
     def _readTemperatureRaw(self):
@@ -53,7 +66,7 @@ class TemperatureSensor:
 
 if __name__ == '__main__':
     try:
-        logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+        logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
         # Testing Temperature Sensor
         ts = TemperatureSensor()
         ts.selfTest()

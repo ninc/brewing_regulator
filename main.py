@@ -5,16 +5,16 @@
 import logging
 import os
 import argparse
-import git
 import subprocess
 from datetime import datetime
 
 from RelayController import *
 from TemperatureSensor import *
 from ScheduleHandler import *
+from Regulator import *
 
 log = logging.getLogger(__name__)
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
 
 def get_git_revision_short_hash():
     return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
@@ -46,6 +46,17 @@ def printSchedule(args):
 def regulate(args):
     """Checks the temperature and takes appropriate action"""
     log.info('Regulate')
+    sc = ScheduleHandler()
+    #TODO Check time
+    targetTemp = sc.getTargetTemperature()
+
+    if targetTemp == None:
+        log.info('Brewing not started')
+        return
+
+    regulator = Regulator(targetTemp)
+    regulator.pid()
+
 
 def advanceSchedule(args):
     """Advances the schedule to the next schedule item"""
@@ -67,7 +78,7 @@ if __name__ == '__main__':
     sp_print_schedule.set_defaults(func=printSchedule)
     sp_regulate = sub_parser.add_parser('regulate',
         help='The regulator takes actions to regulate the temperature according to the current schedule. This is usally done by the crontab job')
-    sp_regulate.set_defaults(func=printSchedule)
+    sp_regulate.set_defaults(func=regulate)
     sp_set_new_timer = sub_parser.add_parser('advance-schedule',
         help='The regulator will advance the schedule. This is usally done by the crontab job')
     sp_set_new_timer.set_defaults(func=advanceSchedule)
