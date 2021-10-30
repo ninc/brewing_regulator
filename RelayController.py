@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import time
 import logging
@@ -49,7 +50,7 @@ class RelayController:
 
 if __name__ == '__main__':
     try:
-        logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
+        logging.basicConfig(filename='/var/log/brewing_regulator.log', format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
         # Testing Relays
         rc = RelayController()
         rc.selfTest()

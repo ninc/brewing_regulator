@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import time
 import logging
@@ -13,33 +14,31 @@ from TemperatureSensor import *
 class Regulator:
     """Regulates the brewing process"""
 
-    def __init__(self, targetTemp):
-        self._targetTemperature = targetTemp
+    def __init__(self):
         self.rc = RelayController()
         self.ts = TemperatureSensor()
         self._heatingRelay = 1
         self._coolingRelay = 2
 
-    def pid(self):
-        #TODO: Implement this
+    def pid(self, targetTemp):
         currentTemp = self.ts.getFilteredTemperature()
 
         #TODO: Implement margin of error
-        if currentTemp < self._targetTemperature:
+        if currentTemp < targetTemp:
             #Turn on heating
             self.rc.setRelayOn(self._heatingRelay)
             self.rc.setRelayOff(self._coolingRelay)
-            log.info('Too cold, turned on heating. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, self._targetTemperature))
-        elif currentTemp > self._targetTemperature:
+            log.info('Too cold, turned on heating. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, targetTemp))
+        elif currentTemp > targetTemp:
             #Turn on cooling
             self.rc.setRelayOff(self._heatingRelay)
             self.rc.setRelayOn(self._coolingRelay)
-            log.info('Too warm, turned on cooling. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, self._targetTemperature))
+            log.info('Too warm, turned on cooling. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, targetTemp))
         else:
             # Within margin, do nothing
             self.rc.setRelayOff(self._heatingRelay)
             self.rc.setRelayOff(self._coolingRelay)
-            log.info('Temperature within margins, doing nothing. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, self._targetTemperature))
+            log.info('Temperature within margins, doing nothing. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, targetTemp))
 
 
     def selfTest(self):
@@ -50,7 +49,7 @@ class Regulator:
 
 if __name__ == '__main__':
     try:
-        logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
+        logging.basicConfig(filename='/var/log/brewing_regulator.log', format='%(asctime)s %(levelname)-8s %(message)s', level=os.environ.get("LOGLEVEL", "INFO"))
         # Testing Relays
         regulator = Regulator()
         regulator.selfTest()
