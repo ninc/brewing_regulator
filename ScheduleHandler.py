@@ -17,7 +17,7 @@ class ScheduleHandler:
         self._activeSchedulePath = 'active_schedule/active_schedule.ini'
         self._activeSchedule = None
         self._currentStepTime = None
-        self._currentStep = 0
+        self._currentStep = 1
         self._lastStep = None
         self._brewingDone = False
         self.readActiveSchedule()
@@ -174,7 +174,11 @@ class ScheduleHandler:
             targetTemp = float(temperature.replace('c', ''))
             return targetTemp
 
+    def getCurrentStep(self):
+        self._currentStep = int(self._activeSchedule['CurrentBrew']['currentstep'])
+
     def getNextScheduleTimer(self):
+        self.getCurrentStep()
         timer = 'timer{}'.format(self._currentStep)
         nextTimer = datetime.strptime(self._activeSchedule['CurrentBrew'][timer], '%Y-%m-%d %H:%M:%S.%f')
         return nextTimer

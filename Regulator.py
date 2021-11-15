@@ -19,26 +19,32 @@ class Regulator:
         self.ts = TemperatureSensor()
         self._heatingRelay = 1
         self._coolingRelay = 2
+        self._marginOfError = 0.5 # Margin of 0.5 celsius
 
     def pid(self, targetTemp):
         currentTemp = self.ts.getFilteredTemperature()
-
-        #TODO: Implement margin of error
-        if currentTemp < targetTemp:
+        log.info('Current Temperature {}c, Target Temperature {}c, Margin {}c'.format(currentTemp, targetTemp, self._marginOfError))
+        print('Current Temperature {}c, Target Temperature {}c, Margin {}c'.format(currentTemp, targetTemp, self._marginOfError))
+        if currentTemp < targetTemp - self._marginOfError:
             #Turn on heating
             self.rc.setRelayOn(self._heatingRelay)
             self.rc.setRelayOff(self._coolingRelay)
-            log.info('Too cold, turned on heating. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, targetTemp))
-        elif currentTemp > targetTemp:
+            log.info('Too cold, turned on heating.')
+            print('Too cold, turned on heating.')
+        elif currentTemp > targetTemp + self._marginOfError:
             #Turn on cooling
+            sleepTime = 5 #Minutes
             self.rc.setRelayOff(self._heatingRelay)
             self.rc.setRelayOn(self._coolingRelay)
-            log.info('Too warm, turned on cooling. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, targetTemp))
+            log.info('Too warm, turned on cooling. Sleeping for {}min.'.format(sleepTime))
+            print('Too warm, turned on cooling. Sleeping for {}min.'.format(sleepTime))
+            time.sleep(60*sleepTime)
         else:
             # Within margin, do nothing
             self.rc.setRelayOff(self._heatingRelay)
             self.rc.setRelayOff(self._coolingRelay)
-            log.info('Temperature within margins, doing nothing. Current Temperature {}c, Target Temperature {}c'.format(currentTemp, targetTemp))
+            log.info('Temperature within margins, doing nothing.')
+            print('Temperature within margins, doing nothing.')
 
 
     def selfTest(self):
