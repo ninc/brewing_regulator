@@ -27,11 +27,9 @@ class RelayController:
         return self._relayState[relayNumber]
 
     def setRelayOn(self, relayNumber):
-        log.info('Turning relay {} ON'.format(relayNumber))
         relay_on(relayNumber)
 
     def setRelayOff(self, relayNumber):
-        log.info('Turning relay {} OFF'.format(relayNumber))
         relay_off(relayNumber)
 
     def setAllRelaysOff(self):

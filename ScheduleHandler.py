@@ -16,7 +16,6 @@ class ScheduleHandler:
 
     def __init__(self):
         self._activeSchedulePath = '{}/active_schedule/active_schedule.ini'.format(this_path)
-        print(self._activeSchedulePath)
         self._activeSchedule = None
         self._currentStepTime = None
         self._currentStep = 1
@@ -50,7 +49,9 @@ class ScheduleHandler:
         if 'h' in t:
             tmpTime = t.replace('h', '')
         elif 'd' in t:
-            tmpTime = t.replace('d', '')            
+            tmpTime = t.replace('d', '')
+        elif 'm' in t:
+            tmpTime = t.replace('m', '')          
         else:
             return False
         
@@ -85,10 +86,10 @@ class ScheduleHandler:
             for each_key, each_val in schedule.items(each_section):
                 temperature, t = self._splitScheduleValue(each_val)
                 if not self._validTemperature(temperature):
-                    log.error('Invalid time format in config {}={}'.format(each_key, each_val))
+                    log.error('Invalid temperature format in config {}={}'.format(each_key, each_val))
                     verified = False
                 if not self._validTime(t):
-                    log.error('Invalid temperature format in config {}={}'.format(each_key, each_val))
+                    log.error('Invalid time format in config {}={}'.format(each_key, each_val))
                     verified = False
                 try:
                     self.keys.append(int(each_key))
@@ -142,9 +143,12 @@ class ScheduleHandler:
         if 'h' in t:
             time_float = float(t.replace('h', ''))
             self._currentStepTime = self._currentStepTime + timedelta(hours=time_float)
-        else:
+        elif 'd' in t:
             time_float = float(t.replace('d', ''))
             self._currentStepTime = self._currentStepTime + timedelta(days=time_float)
+        elif 'm' in t:
+            time_float = float(t.replace('m', ''))
+            self._currentStepTime = self._currentStepTime + timedelta(minutes=time_float)
         return str(self._currentStepTime)
 
     def readActiveSchedule(self):
@@ -195,10 +199,10 @@ class ScheduleHandler:
             log.info('Advancing schedule to step {}'.format(self._currentStep))
             self._saveActiveSchedule()
 
+    def brewingDone(self):
+        self.getCurrentStep()
         if self._currentStep > self._lastStep:
             self._brewingDone = True
-
-    def brewingDone(self):
         return self._brewingDone
 
     def getBrewStartTime(self):

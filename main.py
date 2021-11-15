@@ -44,6 +44,7 @@ class BrewingRegulator:
             #1. Check if we are done brewing
             if self.sh.brewingDone():
                 self.running = False
+                break
             #2. Check if we should advance the schedule
             self.sh.advanceSchedule()
             targetTemp = self.sh.getTargetTemperature()
