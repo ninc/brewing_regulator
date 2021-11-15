@@ -8,13 +8,15 @@ import configparser
 from datetime import datetime, timedelta
 
 
+this_path = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger(__name__)
 
 class ScheduleHandler:
     """Handles the Brewing Schedule"""
 
     def __init__(self):
-        self._activeSchedulePath = 'active_schedule/active_schedule.ini'
+        self._activeSchedulePath = '{}/active_schedule/active_schedule.ini'.format(this_path)
+        print(self._activeSchedulePath)
         self._activeSchedule = None
         self._currentStepTime = None
         self._currentStep = 1

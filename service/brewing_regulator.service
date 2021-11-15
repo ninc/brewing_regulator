@@ -1,0 +1,12 @@
+[Unit]
+Description=Brewing Regulator
+After=network.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/project/brewing_regulator
+ExecStart=python3 main.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
